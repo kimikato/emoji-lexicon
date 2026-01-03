@@ -1,9 +1,14 @@
 # src/emoji_lexicon/models/catalog.py
+# pyright: reportUnknownVariableType=false
+# pyright: reportUnknownMemberType=false
 
 from __future__ import annotations
 
+from importlib import resources
 from pathlib import Path
-from typing import Iterable, Mapping
+from typing import Any, Iterable, Mapping, cast
+
+import msgpack
 
 from .emoji import Emoji
 
@@ -45,7 +50,60 @@ class EmojiCatalog:
             Optional path to emoji.msgpack.
             If omitted, the bundled default data is used.
         """
-        raise NotImplementedError
+        raw_data: Any = {}
+
+        if path is None:
+            with (
+                resources.files("emoji_lexicon.data")
+                .joinpath("emoji.msgpack")
+                .open("rb") as f
+            ):
+                raw_data = msgpack.unpack(f, raw=False)
+        else:
+            with Path(path).open("rb") as f:
+                raw_data = msgpack.unpack(f, raw=False)
+
+        if not isinstance(raw_data, dict):
+            raise TypeError(
+                "Invalid emoji.msgpack format: expected dict at top level"
+            )
+
+        data = cast(dict[str, Any], raw_data)
+
+        emojis: list[Emoji] = []
+        by_id: dict[int, Emoji] = {}
+        by_short_name: dict[str, Emoji] = {}
+        by_alias: dict[str, list[Emoji]] = {}
+        by_char: dict[str, Emoji] = {}
+
+        for item in cast(list[dict[str, Any]], data["emojis"]):
+            emoji = Emoji(
+                id=cast(int, item["id"]),
+                char=cast(str, item["char"]),
+                short_name=cast(str, item["short_name"]),
+                aliases=tuple(cast(list[str], item["aliases"])),
+                group=cast(str, item["group"]),
+                subgroup=cast(str, item["subgroup"]),
+                tags=tuple(cast(list[str], item["tags"])),
+                unicode_version=cast(str, item["unicode_version"]),
+                base_id=cast(int | None, item.get("base_id")),
+            )
+
+            emojis.append(emoji)
+            by_id[emoji.id] = emoji
+            by_short_name[emoji.short_name] = emoji
+            by_char[emoji.char] = emoji
+
+            for alias in emoji.aliases:
+                by_alias.setdefault(alias, []).append(emoji)
+
+        return cls(
+            emojis,
+            by_id=by_id,
+            by_short_name=by_short_name,
+            by_alias=by_alias,
+            by_char=by_char,
+        )
 
     # ----------------------------------------
     # Basic accessors
