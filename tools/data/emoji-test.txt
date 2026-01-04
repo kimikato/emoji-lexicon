@@ -1,0 +1,5 @@
+# group: Smileys & Emotion
+# subgroup: face-smiling
+1F600                                      ; fully-qualified     # 😀 grinning face E1.0
+1F603                                      ; fully-qualified     # 😃 grinning face with big eyes E0.6
+1F604                                      ; fully-qualified     # 😄 grinning face with smiling eyes E0.6

@@ -9,35 +9,76 @@ from typing import Any
 
 import msgpack
 
+from tools.unicode.emoji_test_parser import parse_emoji_test
+
 OUTPUT_DIR = Path("src/emoji_lexicon/data")
 OUTPUT_FILE = OUTPUT_DIR / "emoji.msgpack"
+
+
+def normalize_name(name: str) -> str:
+    """
+    Return short name normalized to snake case
+
+    Parameters:
+    ------------
+
+    name:
+        short name
+
+    Examples:
+        "grinning face" -> "grinning_face"
+    """
+    return name.lower().replace(" ", "_")
 
 
 def build() -> None:
     OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
 
+    emojis: list[dict[str, Any]] = []
+    by_id: dict[str, int] = {}
+    by_short_name: dict[str, int] = {}
+    by_alias: dict[str, int] = {}
+    by_char: dict[str, int] = {}
+
+    emoji_id: int = 0
+
+    emoji_test_path = Path("tools/data/emoji-test.txt")
+
+    for entry in parse_emoji_test(emoji_test_path):
+        # Process only data with a qualification that matches "fully-qualified"
+        if entry.qualification != "fully-qualified":
+            continue
+
+        # Normalized name
+        short_name = normalize_name(entry.name)
+
+        emoji: dict[str, Any] = {
+            "id": emoji_id,
+            "char": entry.char,
+            "short_name": short_name,
+            "aliases": [],
+            "group": entry.group,
+            "subgroup": entry.subgroup,
+            "tags": [],
+            "unicode_version": entry.unicode_version,
+            "base_id": None,
+        }
+
+        emojis.append(emoji)
+        by_id[str(emoji_id)] = emoji_id
+        by_short_name[short_name] = emoji_id
+        by_char[entry.char] = emoji_id
+
+        emoji_id += 1
+
     payload: dict[str, Any] = {
-        "meta": {
-            "version": "0.1.0",
-        },
-        "emojis": [
-            {
-                "id": 0,
-                "char": "😄",
-                "short_name": "smile",
-                "aliases": ["happy"],
-                "group": "Smileys & Emotion",
-                "subgroup": "face-smiling",
-                "tags": ["happy", "smile"],
-                "unicode_version": "6.0",
-                "base_id": None,
-            }
-        ],
+        "meta": {"version": "0.1.0"},
+        "emojis": emojis,
         "indexes": {
-            "by_id": {0: 0},
-            "by_short_name": {"smile": 0},
-            "by_alias": {"happy": [0]},
-            "by_char": {"😄": 0},
+            "by_id": by_id,
+            "by_short_name": by_short_name,
+            "by_alias": by_alias,
+            "by_char": by_char,
         },
     }
 
