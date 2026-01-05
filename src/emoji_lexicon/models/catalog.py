@@ -30,11 +30,13 @@ class EmojiCatalog:
         by_alias: Mapping[str, Iterable[Emoji]],
         by_char: Mapping[str, Emoji],
     ) -> None:
-        self._emojis = tuple(emojis)
-        self._by_id = dict(by_id)
-        self._by_short_name = dict(by_short_name)
-        self._by_alias = {k: tuple(v) for k, v in by_alias.items()}
-        self._by_char = dict(by_char)
+        self._emojis: tuple[Emoji, ...] = tuple(emojis)
+        self._by_id: dict[int, Emoji] = dict(by_id)
+        self._by_short_name: dict[str, Emoji] = dict(by_short_name)
+        self._by_alias: dict[str, tuple[Emoji, ...]] = {
+            k: tuple(v) for k, v in by_alias.items()
+        }
+        self._by_char: dict[str, Emoji] = dict(by_char)
 
     # ----------------------------------------
     # Factory
@@ -149,4 +151,27 @@ class EmojiCatalog:
         query:
             short name, alias, or tag
         """
-        raise NotImplementedError
+        q = query.strip(":").lower()
+
+        hits: dict[int, Emoji] = {}
+
+        # exact short name
+        e = self._by_short_name.get(q)
+        if e:
+            hits[e.id] = e
+
+        # exact alias
+        for emoji in self._by_alias.get(q, []):
+            hits[emoji.id] = emoji
+
+        # partial match
+        for emoji in self._emojis:
+            if q in emoji.short_name:
+                hits[emoji.id] = emoji
+                continue
+            for tag in emoji.tags:
+                if q in tag:
+                    hits[emoji.id] = emoji
+                    break
+
+        return tuple(sorted(hits.values(), key=lambda e: e.id))
