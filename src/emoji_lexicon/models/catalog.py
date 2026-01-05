@@ -146,6 +146,8 @@ class EmojiCatalog:
         """
         Search emojis by short name, alias, or tag.
 
+        The search is case-insensitive and returns all matching emojis.
+
         Parameters:
         ------------
         query:
@@ -175,3 +177,12 @@ class EmojiCatalog:
                     break
 
         return tuple(sorted(hits.values(), key=lambda e: e.id))
+
+    # ----------------------------------------
+    # group / subgroup
+    # ----------------------------------------
+    def groups(self) -> tuple[str, ...]:
+        return tuple(sorted({e.group for e in self._emojis}))
+
+    def subgroups(self) -> tuple[str, ...]:
+        return tuple(sorted({e.subgroup for e in self._emojis}))

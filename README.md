@@ -34,8 +34,10 @@ from emoji_lexicon import get_catalog
 
 catalog = get_catalog()
 
-catalog.get("smile")		# lookup by short name or alias
-catalog.get_by_char("😁")	# lookup by emoji character
-catalog.search("happy")		# full-text search (alias / tag)
-len(catalog)				# total emoji count
+catalog.get("smile")        # lookup by short name or alias
+catalog.get_by_char("😁")   # lookup by emoji character
+catalog.search("happy")     # full-text search (alias / tag)
+len(catalog)                # total emoji count
+catalog.groups()            # available emoji groups
+catalog.subgroups()         # available emoji subgroups
 ```

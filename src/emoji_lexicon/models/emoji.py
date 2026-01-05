@@ -40,3 +40,9 @@ class Emoji:
 
     # Optional base emoji id (for skin tone variants, etc.)
     base_id: int | None = None
+
+    def __str__(self) -> str:
+        return self.char
+
+    def __repr__(self) -> str:
+        return f"Emoji(char={self.char!r}, short_name={self.short_name!r})"

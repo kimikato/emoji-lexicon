@@ -27,3 +27,21 @@ def test_search_smile():
 
     assert isinstance(results, tuple)
     assert len(results) > 0
+
+
+def test_groups_and_subgroups():
+    catalog = get_catalog()
+    assert "Smileys & Emotion" in catalog.groups()
+    assert "face-smiling" in catalog.subgroups()
+
+
+def test_char():
+    catalog = get_catalog()
+    emoji = catalog.get("smile")
+    assert "😀" == str(emoji)
+
+
+def test_repr():
+    catalog = get_catalog()
+    emoji = catalog.get("smile")
+    assert "Emoji(char='😀', short_name='grinning_face')" == repr(emoji)
