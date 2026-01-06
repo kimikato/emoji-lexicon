@@ -6,8 +6,8 @@
 [![Python](https://img.shields.io/pypi/pyversions/emoji-lexicon.svg)](https://pypi.org/project/emoji-lexicon/)
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
-emoji-lexicon is a build-time generated emoji lexicon for Python,
-designed for fast and reliable emoji lookup.
+🚀 **emoji-lexicon** is a fast, build-time generated emoji lexicon for Python,
+powered by Unicode emoji-test and CLDR annotations.
 
 ## Features
 
@@ -29,15 +29,75 @@ pip install emoji-lexicon
 
 ## Usage
 
-```Python
+```python
 from emoji_lexicon import get_catalog
 
 catalog = get_catalog()
 
-catalog.get("smile")        # lookup by short name or alias
-catalog.get_by_char("😁")   # lookup by emoji character
-catalog.search("happy")     # full-text search (alias / tag)
-len(catalog)                # total emoji count
-catalog.groups()            # available emoji groups
-catalog.subgroups()         # available emoji subgroups
+# lookup by short name or alias
+catalog.get("smile")
+# -> Emoji | None
+
+# Slack / gemoji style
+catalog.get(":smile:")
+
+# lookup by emoji character
+catalog.get_by_char("😁")
+# -> Emoji | None
+
+# get all emojis
+catalog.get_all()
+
+# total emoji count
+len(catalog)
+
+# iterator
+for emoji in catalog:
+	print(emoji.char, emoji.short_name)
 ```
+
+### `.search()` , `.find()`
+
+```python
+# partial match (short_name / alias / tag)
+catalog.search("happy")
+# -> tuple[Emoji, ...]
+
+# alias of .search()
+catalog.find("happy")
+# -> tuple[Emoji, ...]
+```
+
+`.search()` and `.find()` perform partial matching and return multiple emojis.
+`.find()` is a user-facing alias of `.search()`.
+
+### `.groups()`, `.subgroups()`
+
+```python
+from emoji_lexicon import get_catalog
+catalog = get_catalog()
+
+# available emoji groups
+catalog.groups()
+
+# available emoji subgroups
+catalog.subgroups()
+
+```
+
+Application examples:
+
+-   Categories UI
+-   IME candidate narrowing down
+-   emoji picker
+
+## Design philosophy
+
+-   runtime zero-cost
+-   immutable catalog
+-   Pythonic & typed
+
+## License
+
+MIT License
+© 2026 Kiminori Kato

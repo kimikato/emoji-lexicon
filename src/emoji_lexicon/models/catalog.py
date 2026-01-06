@@ -108,6 +108,13 @@ class EmojiCatalog:
         )
 
     # ----------------------------------------
+    # Normalize query
+    # ----------------------------------------
+    @staticmethod
+    def normalize_query(query: str) -> str:
+        return query.strip().strip(":").lower()
+
+    # ----------------------------------------
     # Basic accessors
     # ----------------------------------------
     def __len__(self) -> int:
@@ -116,9 +123,19 @@ class EmojiCatalog:
     def __iter__(self) -> Iterable[Emoji]:
         return iter(self._emojis)
 
-    def get_by_id(self, emoji_id: int) -> Emoji | None:
-        return self._by_id.get(emoji_id)
+    def __str__(self) -> str:
+        return ""
 
+    def __repr__(self) -> str:
+        return (
+            f"<EmojiCatalog "
+            f"size={len(self._emojis)!r}, "
+            f"groups={len(self.groups())!r}>"
+        )
+
+    # ----------------------------------------
+    # Get
+    # ----------------------------------------
     def get(self, name: str) -> Emoji | None:
         """
         Lookup emoji by short name or alias.
@@ -128,7 +145,7 @@ class EmojiCatalog:
         name:
             short name or alias
         """
-        name = name.strip(":")
+        name = self.normalize_query(name)
         if name in self._by_short_name:
             return self._by_short_name[name]
         aliases = self._by_alias.get(name)
@@ -136,8 +153,18 @@ class EmojiCatalog:
             return aliases[0]
         return None
 
+    def get_by_id(self, emoji_id: int) -> Emoji | None:
+        return self._by_id.get(emoji_id)
+
     def get_by_char(self, char: str) -> Emoji | None:
         return self._by_char.get(char)
+
+    def get_all(self) -> tuple[Emoji, ...]:
+        """
+        Return all emojis in the catalog.
+        The returned tuple is immutable and ordered by emoji ID.
+        """
+        return self._emojis
 
     # ----------------------------------------
     # Search
@@ -153,7 +180,7 @@ class EmojiCatalog:
         query:
             short name, alias, or tag
         """
-        q = query.strip(":").lower()
+        q = self.normalize_query(query)
 
         hits: dict[int, Emoji] = {}
 
@@ -177,6 +204,14 @@ class EmojiCatalog:
                     break
 
         return tuple(sorted(hits.values(), key=lambda e: e.id))
+
+    def find(self, query: str) -> Iterable[Emoji]:
+        """
+        Find emojis matching the given query.
+
+        This is a user-facing alias of search().
+        """
+        return self.search(query)
 
     # ----------------------------------------
     # group / subgroup
