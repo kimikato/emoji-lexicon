@@ -38,6 +38,28 @@ class EmojiCatalog:
         }
         self._by_char: dict[str, Emoji] = dict(by_char)
 
+        # ----------------------------------------
+        # Inverted index (token -> emojis)
+        # ----------------------------------------
+        token_map: dict[str, list[Emoji]] = {}
+
+        for e in self._emojis:
+            # short_name tokens
+            token_map.setdefault(e.short_name, []).append(e)
+
+            # aliases
+            for alias in e.aliases:
+                token_map.setdefault(alias, []).append(e)
+
+            # tags
+            for tag in e.tags:
+                token_map.setdefault(tag, []).append(e)
+
+        self._by_token: dict[str, tuple[Emoji, ...]] = {
+            k: tuple(sorted(v, key=lambda e: e.id))
+            for k, v in token_map.items()
+        }
+
     # ----------------------------------------
     # Factory
     # ----------------------------------------
@@ -145,13 +167,13 @@ class EmojiCatalog:
         name:
             short name or alias
         """
-        name = self.normalize_query(name)
-        if name in self._by_short_name:
-            return self._by_short_name[name]
-        aliases = self._by_alias.get(name)
-        if aliases:
-            return aliases[0]
-        return None
+        q = self.normalize_query(name)
+
+        if q in self._by_short_name:
+            return self._by_short_name[q]
+
+        hits = self._by_token.get(q)
+        return hits[0] if hits else None
 
     def get_by_id(self, emoji_id: int) -> Emoji | None:
         return self._by_id.get(emoji_id)
@@ -169,47 +191,13 @@ class EmojiCatalog:
     # ----------------------------------------
     # Search
     # ----------------------------------------
-    def search(self, query: str) -> Iterable[Emoji]:
-        """
-        Search emojis by short name, alias, or tag.
-
-        The search is case-insensitive and returns all matching emojis.
-
-        Parameters:
-        ------------
-        query:
-            short name, alias, or tag
-        """
+    def search(self, query: str) -> tuple[Emoji, ...]:
         q = self.normalize_query(query)
+        return self._by_token.get(q, ())
 
-        hits: dict[int, Emoji] = {}
-
-        # exact short name
-        e = self._by_short_name.get(q)
-        if e:
-            hits[e.id] = e
-
-        # exact alias
-        for emoji in self._by_alias.get(q, []):
-            hits[emoji.id] = emoji
-
-        # partial match
-        for emoji in self._emojis:
-            if q in emoji.short_name:
-                hits[emoji.id] = emoji
-                continue
-            for tag in emoji.tags:
-                if q in tag:
-                    hits[emoji.id] = emoji
-                    break
-
-        return tuple(sorted(hits.values(), key=lambda e: e.id))
-
-    def find(self, query: str) -> Iterable[Emoji]:
+    def find(self, query: str) -> tuple[Emoji, ...]:
         """
         Find emojis matching the given query.
-
-        This is a user-facing alias of search().
         """
         return self.search(query)
 
