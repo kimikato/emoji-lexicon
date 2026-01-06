@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.1.3] - 2026-01-07
+
+### Improved
+
+-   Improved search to use inverted index
+
 ## [0.1.2] - 2026-01-06
 
 ### Added
