@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.1.4] - 2026-01-08
+
+### Improved
+
+-   Improved `.search()` / `.find()` with token-based AND logic and relevance ranking
+-   Documented search behavior and ranking rules in README
+
 ## [0.1.3] - 2026-01-07
 
 ### Improved

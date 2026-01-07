@@ -189,11 +189,113 @@ class EmojiCatalog:
         return self._emojis
 
     # ----------------------------------------
+    # Search scoring constants
+    # ----------------------------------------
+    # Higher score means higher relevance.
+    # Exact matches are prioritized over prefix matches.
+    SHORT_NAME_EXACT = 100
+    ALIAS_EXACT = 80
+    TAG_EXACT = 60
+    TOKEN_EXACT = 30
+    PREFIX_MATCH = 5
+
+    # ----------------------------------------
     # Search
     # ----------------------------------------
     def search(self, query: str) -> tuple[Emoji, ...]:
+        """
+        Search emojis by tokenized query.
+
+        The search performs the following steps:
+
+        1. Normalize the query (case-insensitive, strip ":" style).
+        2. Split the query into space-separated tokens.
+        3. For each token, collect matching emojis using:
+            - Exact short_name match (highest priority)
+            - Exact alias match
+            - Exact tag match
+            - Prefix match (only for tokens with length >= 3)
+        4. Combine results using AND logic across tokens.
+        5. Rank results by relevance score, then by emoji ID.
+
+        Notes:
+        - Empty or whitespace-only queries return an empty result.
+        - Prefix matching is intentionally disabled for short tokens
+          to avoid noisy matches.
+        - The result order is deterministic.
+        - Tag matches are ranked lower than short_name and alias matches, but higher than generic token matches.
+
+        Parameters:
+        ------------
+        query:
+            Search query string (e.g. "smile", "smile face")
+
+        Returns:
+        ---------
+        tuple[Emoji, ...]
+            Matching emojis ordered by relevance.
+        """
         q = self.normalize_query(query)
-        return self._by_token.get(q, ())
+        if not q:
+            return ()
+
+        tokens = q.split()
+        if not tokens:
+            return ()
+
+        scores: dict[int, int] = {}
+
+        for token in tokens:
+            token_scores: dict[int, int] = {}
+
+            # exact match
+            exact = self._by_token.get(token)
+            if exact:
+                for e in exact:
+                    if token == e.short_name:
+                        token_scores[e.id] = self.SHORT_NAME_EXACT
+                    elif token in e.aliases:
+                        token_scores[e.id] = self.ALIAS_EXACT
+                    elif token in e.tags:
+                        token_scores[e.id] = self.TAG_EXACT
+                    else:
+                        token_scores[e.id] = self.TOKEN_EXACT
+
+            # prefix match (only if length >= 3)
+            # prefix match is enabled only for tokens length >= 3
+            # to avoid noisy matches for short tokens
+            if len(token) >= 3:
+                prefix_ids: set[int] = set()
+                # NOTE: prefix search is O(N) over token space
+                # acceptable for current catalog size (~7k tokens)
+                for key, emojis in self._by_token.items():
+                    if key.startswith(token):
+                        prefix_ids.update(e.id for e in emojis)
+
+                for eid in prefix_ids:
+                    token_scores[eid] = (
+                        token_scores.get(eid, 0) + self.PREFIX_MATCH
+                    )
+
+            # AND merge
+            if scores:
+                scores = {
+                    eid: scores[eid] + token_scores[eid]
+                    for eid in scores.keys() & token_scores.keys()
+                }
+            else:
+                scores = token_scores
+
+        if not scores:
+            return ()
+
+        return tuple(
+            self._by_id[eid]
+            for eid, _ in sorted(
+                scores.items(),
+                key=lambda x: (-x[1], x[0]),  # score desc, id asc
+            )
+        )
 
     def find(self, query: str) -> tuple[Emoji, ...]:
         """

@@ -90,8 +90,3 @@ def test_find_smile():
 
     assert isinstance(results, tuple)
     assert len(results) > 0
-
-
-def test_search_token_only():
-    catalog = get_catalog()
-    assert catalog.search("smi") == ()
