@@ -29,11 +29,17 @@ pip install emoji-lexicon
 
 ## Usage
 
+Basic usage:
+
 ```python
 from emoji_lexicon import get_catalog
 
 catalog = get_catalog()
+```
 
+### `.get()`, `get_by_char()`, `get_all()`
+
+```python
 # lookup by short name or alias
 catalog.get("smile")
 # -> Emoji | None
@@ -47,13 +53,6 @@ catalog.get_by_char("😁")
 
 # get all emojis
 catalog.get_all()
-
-# total emoji count
-len(catalog)
-
-# iterator
-for emoji in catalog:
-	print(emoji.char, emoji.short_name)
 ```
 
 ### `.search()` , `.find()`
@@ -82,7 +81,17 @@ catalog.groups()
 
 # available emoji subgroups
 catalog.subgroups()
+```
 
+### Misc
+
+```python
+# total emoji count
+len(catalog)
+
+# iterator
+for emoji in catalog:
+	print(emoji.char, emoji.short_name)
 ```
 
 Application examples:
@@ -91,9 +100,42 @@ Application examples:
 -   IME candidate narrowing down
 -   emoji picker
 
+## Search behavior
+
+The `.search()` and `.find()` methods perform token-based emoji search.
+
+Search rules:
+
+-   Case-insensitive
+-   Supports Slack / gemoji style queries (e.g. `:smile`)
+-   Space-separated tokens are combined using AND logic
+-   Results are ranked by relevance
+
+Matching priority (high -> low):
+
+1. Exact short name match
+2. Exact alias match
+3. Exact tag match
+4. Prefix match (only for tokens with 3+ characters)
+
+Ranking is deterministic and stable (score-based, then emoji ID)
+
+Example:
+
+```python
+catalog.search("smile")
+catalog.search("smile face")
+catalog.search(":smile:")
+```
+
+Notes:
+
+-   Prefix matching is disabled for very short tokens to reduce noise.
+-   Result order is deterministic and stable.
+
 ## Design philosophy
 
--   runtime zero-cost
+-   zero-cost at runtime
 -   immutable catalog
 -   Pythonic & typed
 
