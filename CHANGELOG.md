@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.1.5] - 2026-01-08
+
+### Fixed
+
+-   Fixed flake8 E501 (line too long) lint error
+
 ## [0.1.4] - 2026-01-08
 
 ### Improved

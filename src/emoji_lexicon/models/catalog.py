@@ -223,7 +223,8 @@ class EmojiCatalog:
         - Prefix matching is intentionally disabled for short tokens
           to avoid noisy matches.
         - The result order is deterministic.
-        - Tag matches are ranked lower than short_name and alias matches, but higher than generic token matches.
+        - Tag matches are ranked lower than short_name and alias matches,
+          but higher than generic token matches.
 
         Parameters:
         ------------
