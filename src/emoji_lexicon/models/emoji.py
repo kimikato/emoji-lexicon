@@ -36,7 +36,7 @@ class Emoji:
     tags: Sequence[str]
 
     # Unicode version when this emoji was introduced
-    unicode_version: str
+    introduced_in: str
 
     # Optional base emoji id (for skin tone variants, etc.)
     base_id: int | None = None
