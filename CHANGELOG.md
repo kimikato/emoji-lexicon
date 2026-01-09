@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.2.1] - 2026-01-09
+
+### Fixed
+
+-   Renamed internal module directory from `build/` to `build_data/` to avoid `.gitignore` conflicts
+-   Fixed packaging issue where build-time modules were not included in source distribution
+
+### Notes
+
+-   No public API changes
+-   This release only affects internal build-time structure
+
 ## [0.2.0] - 2026-01-09
 
 ### Highlights
