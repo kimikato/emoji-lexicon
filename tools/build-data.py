@@ -5,99 +5,77 @@
 from __future__ import annotations
 
 from pathlib import Path
-from typing import TYPE_CHECKING, Any
+from typing import Any
 
 import msgpack
 
-from tools.cldr.annotations_parser import parse_annotations_xml
-from tools.common.normalize import normalize_emoji_name
-from tools.unicode.emoji_test_parser import parse_emoji_test
+from emoji_lexicon.build import merge_emoji
+from emoji_lexicon.models import Emoji
+from emoji_lexicon.unicode import parse_annotations_xml, parse_emoji_test
 
-if TYPE_CHECKING:
-    from tools.cldr.annotations_parser import CLDREntry
+# ----------------------------------------
+# Paths
+# ----------------------------------------
+ROOT = Path(__file__).resolve().parents[1]
 
-OUTPUT_DIR = Path("src/emoji_lexicon/data")
+DATA_DIR = ROOT / "tools" / "data"
+EMOJI_TEST_TXT = DATA_DIR / "emoji-test.txt"
+CLDR_XML = DATA_DIR / "cldr" / "common" / "annotations" / "en.xml"
+
+OUTPUT_DIR = ROOT / "src" / "emoji_lexicon" / "data"
 OUTPUT_FILE = OUTPUT_DIR / "emoji.msgpack"
 
-CLDR_XML = Path("tools/data/cldr/common/annotations/en.xml")
-if not CLDR_XML.exists():
-    raise RuntimeError("Missing CLDR annotations XML: en.xml")
 
-
+# ----------------------------------------
+# Build
+# ----------------------------------------
 def build() -> None:
     OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
 
-    emojis: list[dict[str, Any]] = []
-    by_id: dict[str, int] = {}
-    by_short_name: dict[str, int] = {}
-    by_alias: dict[str, list[int]] = {}
-    by_char: dict[str, int] = {}
+    # Parse inputs
+    emoji_tests = parse_emoji_test(EMOJI_TEST_TXT)
+    cldr_entries = parse_annotations_xml(CLDR_XML)
 
-    emoji_id: int = 0
+    emojis: list[Emoji] = []
 
-    emoji_test_path = Path("tools/data/emoji-test.txt")
-
-    # parse CLDR annotations XML
-    cldr_entries: dict[str, CLDREntry] = parse_annotations_xml(CLDR_XML)
-
-    for entry in parse_emoji_test(emoji_test_path):
-        # Process only data with a qualification that matches "fully-qualified"
+    emoji_id = 0
+    for entry in emoji_tests.entries:
+        # Only fully-qualified emojis
         if entry.qualification != "fully-qualified":
             continue
 
-        # get CLDR
         cldr = cldr_entries.get(entry.char)
 
-        # Short name
-        if cldr and cldr.short_name:
-            short_name = cldr.short_name
-        else:
-            short_name = normalize_emoji_name(entry.name)
-
-        # aliases / tags
-        if cldr:
-            aliases = list(cldr.aliases)
-            tags = list(cldr.tags)
-        else:
-            aliases = []
-            tags = []
-
-        emoji: dict[str, Any] = {
-            "id": emoji_id,
-            "char": entry.char,
-            "short_name": short_name,
-            "aliases": aliases,
-            "group": entry.group,
-            "subgroup": entry.subgroup,
-            "tags": tags,
-            "unicode_version": entry.unicode_version,
-            "base_id": None,
-        }
-
+        emoji = merge_emoji(
+            entry=entry,
+            cldr=cldr,
+            emoji_id=emoji_id,
+        )
         emojis.append(emoji)
-        by_id[str(emoji_id)] = emoji_id
-        for alias in aliases:
-            by_alias.setdefault(alias, []).append(emoji_id)
-        by_short_name[short_name] = emoji_id
-        by_char[entry.char] = emoji_id
-
         emoji_id += 1
 
-    payload: dict[str, Any] = {
-        "meta": {"version": "0.1.0"},
-        "emojis": emojis,
-        "indexes": {
-            "by_id": by_id,
-            "by_short_name": by_short_name,
-            "by_alias": by_alias,
-            "by_char": by_char,
-        },
+    # Serialize payload
+    payload = {
+        "emojis": [
+            {
+                "id": e.id,
+                "char": e.char,
+                "short_name": e.short_name,
+                "aliases": list(e.aliases),
+                "group": e.group,
+                "subgroup": e.subgroup,
+                "tags": list(e.tags),
+                "introduced_in": e.introduced_in,
+                "base_id": e.base_id,
+            }
+            for e in emojis
+        ]
     }
 
     with OUTPUT_FILE.open("wb") as f:
         msgpack.pack(payload, f, use_bin_type=True)
 
-    print(f"Generated: {OUTPUT_FILE}")
+    print(f"✨ Generated emoji lexicon: {OUTPUT_FILE}")
 
 
 if __name__ == "__main__":

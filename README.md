@@ -21,6 +21,22 @@ powered by Unicode emoji-test and CLDR annotations.
 
 -   Python 3.12+
 
+## Status
+
+-   Stable build-time generation pipeline
+-   ~98% test coverage
+-   Deterministic emoji catalog generation
+-   Public API is stable
+
+### Development
+
+Emoji data is generated at build time from:
+
+-   Unicode emoji-test.txt
+-   CLDR annotations (English)
+
+The runtime catalog is fully read-only and cached.
+
 ## Installation
 
 ```bash
