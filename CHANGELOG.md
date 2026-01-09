@@ -1,5 +1,35 @@
 # Changelog
 
+## [0.2.0] - 2026-01-09
+
+### Highlights
+
+-   Rebuilt build pipeline with clear separation of concerns
+-   Introduced deterministic emoji merge logic
+-   Added comprehensive test coverage (≈98%)
+-   Guaranteed schema compatibility between generator and loader
+
+### Added
+
+-   Added `EmojiTestData` to represent emoji-test dataset metadata
+-   Added Unicode version metadata to `EmojiCatalog`
+-   Added CLDR version metadata to `EmojiCatalog`
+
+### Improved
+
+-   Improved catalog introspection and debugging support
+-   Improved robustness by detecting multiple edge cases via tests
+    (schema mismatches, cache-related paths)
+
+### Changed
+
+-   Renamed `EmojiTestEntry.unicode_version` to `introduced_in`
+
+### Notes
+
+-   No breaking API changes
+-   Foundation for upcoming i18n (CLDR multi-locale) and skin tone support
+
 ## [0.1.5] - 2026-01-08
 
 ### Fixed

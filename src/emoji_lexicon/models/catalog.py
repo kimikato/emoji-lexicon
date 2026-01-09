@@ -109,7 +109,7 @@ class EmojiCatalog:
                 group=cast(str, item["group"]),
                 subgroup=cast(str, item["subgroup"]),
                 tags=tuple(cast(list[str], item["tags"])),
-                unicode_version=cast(str, item["unicode_version"]),
+                introduced_in=cast(str, item["introduced_in"]),
                 base_id=cast(int | None, item.get("base_id")),
             )
 
