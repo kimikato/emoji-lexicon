@@ -9,7 +9,7 @@ from typing import Any
 
 import msgpack
 
-from emoji_lexicon.build import merge_emoji
+from emoji_lexicon.build_data import merge_emoji
 from emoji_lexicon.models import Emoji
 from emoji_lexicon.unicode import parse_annotations_xml, parse_emoji_test
 
